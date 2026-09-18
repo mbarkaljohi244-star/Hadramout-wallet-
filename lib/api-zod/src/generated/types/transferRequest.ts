@@ -18,4 +18,9 @@ export interface TransferRequest {
      */
   amount: number;
   currency: TransferCurrency;
+  /**
+     * Six-digit transfer PIN used when a JWT is not supplied.
+     * @pattern ^[0-9]{6}$
+     */
+  pin?: string;
 }

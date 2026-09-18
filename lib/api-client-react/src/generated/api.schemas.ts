@@ -17,6 +17,16 @@ export interface RegisterUserRequest {
   name?: string;
   /** @maxLength 254 */
   email?: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+  /**
+     * Six-digit transfer PIN. Leading zeroes are allowed.
+     * @pattern ^[0-9]{6}$
+     */
+  pin: string;
 }
 
 export const BalancesValue = {
@@ -35,10 +45,28 @@ export interface WalletRegistrationResponse {
   email?: string;
   balances: Balances;
   createdAt: string;
+  accessToken: string;
 }
 
 export interface ErrorResponse {
   error: string;
+}
+
+export interface LoginRequest {
+  /** @pattern ^HW-[0-9]{6}$ */
+  walletId: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface LoginResult {
+  accessToken: string;
+  userId: string;
+  /** @pattern ^HW-[0-9]{6}$ */
+  walletId: string;
 }
 
 export type TransferCurrency = typeof TransferCurrency[keyof typeof TransferCurrency];
@@ -62,6 +90,11 @@ export interface TransferRequest {
      */
   amount: number;
   currency: TransferCurrency;
+  /**
+     * Six-digit transfer PIN used when a JWT is not supplied.
+     * @pattern ^[0-9]{6}$
+     */
+  pin?: string;
 }
 
 export interface TransferResult {

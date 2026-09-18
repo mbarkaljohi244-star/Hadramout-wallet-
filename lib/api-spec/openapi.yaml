@@ -59,6 +59,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [users]
+      summary: Log in with a wallet password
+      description: Verifies a wallet password and returns a signed access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResult"
+        "400":
+          description: Invalid login details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid wallet ID or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /transfer:
     post:
       operationId: transferFunds
@@ -122,6 +153,15 @@ components:
           type: string
           format: email
           maxLength: 254
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        pin:
+          type: string
+          pattern: "^[0-9]{6}$"
+          description: Six-digit transfer PIN. Leading zeroes are allowed.
+      required: [password, pin]
       additionalProperties: false
     Balances:
       type: object
@@ -159,7 +199,9 @@ components:
         createdAt:
           type: string
           format: date-time
-      required: [userId, walletId, balances, createdAt]
+        accessToken:
+          type: string
+      required: [userId, walletId, balances, createdAt, accessToken]
       additionalProperties: false
     ErrorResponse:
       type: object
@@ -167,6 +209,31 @@ components:
         error:
           type: string
       required: [error]
+      additionalProperties: false
+    LoginRequest:
+      type: object
+      properties:
+        walletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+      required: [walletId, password]
+      additionalProperties: false
+    LoginResult:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        walletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+      required: [accessToken, userId, walletId]
       additionalProperties: false
     TransferCurrency:
       type: string
@@ -186,6 +253,10 @@ components:
           description: Positive amount with no more than 8 decimal places.
         currency:
           $ref: "#/components/schemas/TransferCurrency"
+        pin:
+          type: string
+          pattern: "^[0-9]{6}$"
+          description: Six-digit transfer PIN used when a JWT is not supplied.
       required: [senderWalletId, receiverWalletId, amount, currency]
       additionalProperties: false
     TransferResult:

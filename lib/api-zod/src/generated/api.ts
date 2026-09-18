@@ -25,11 +25,17 @@ export const registerUserBodyNameMax = 100;
 
 export const registerUserBodyEmailMax = 254;
 
+export const registerUserBodyPasswordMin = 8;
+export const registerUserBodyPasswordMax = 128;
+
+export const registerUserBodyPinRegExp = new RegExp('^[0-9]{6}$');
 
 
 export const RegisterUserBody = zod.object({
   "name": zod.string().min(1).max(registerUserBodyNameMax).optional(),
-  "email": zod.string().email().max(registerUserBodyEmailMax).optional()
+  "email": zod.string().email().max(registerUserBodyEmailMax).optional(),
+  "password": zod.string().min(registerUserBodyPasswordMin).max(registerUserBodyPasswordMax),
+  "pin": zod.string().regex(registerUserBodyPinRegExp).describe('Six-digit transfer PIN. Leading zeroes are allowed.')
 })
 
 export const registerUserResponseWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
@@ -46,7 +52,33 @@ export const RegisterUserResponse = zod.object({
   "USD": zod.literal(0),
   "USDT": zod.literal(0)
 }),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "accessToken": zod.string()
+})
+
+
+/**
+ * Verifies a wallet password and returns a signed access token.
+ * @summary Log in with a wallet password
+ */
+export const loginUserBodyWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
+export const loginUserBodyPasswordMin = 8;
+export const loginUserBodyPasswordMax = 128;
+
+
+
+export const LoginUserBody = zod.object({
+  "walletId": zod.string().regex(loginUserBodyWalletIdRegExp),
+  "password": zod.string().min(loginUserBodyPasswordMin).max(loginUserBodyPasswordMax)
+})
+
+export const loginUserResponseWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
+
+
+export const LoginUserResponse = zod.object({
+  "accessToken": zod.string(),
+  "userId": zod.string().uuid(),
+  "walletId": zod.string().regex(loginUserResponseWalletIdRegExp)
 })
 
 
@@ -58,13 +90,15 @@ export const transferFundsBodySenderWalletIdRegExp = new RegExp('^HW-[0-9]{6}$')
 export const transferFundsBodyReceiverWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
 export const transferFundsBodyAmountExclusiveMin = 0;
 
+export const transferFundsBodyPinRegExp = new RegExp('^[0-9]{6}$');
 
 
 export const TransferFundsBody = zod.object({
   "senderWalletId": zod.string().regex(transferFundsBodySenderWalletIdRegExp),
   "receiverWalletId": zod.string().regex(transferFundsBodyReceiverWalletIdRegExp),
   "amount": zod.number().gt(transferFundsBodyAmountExclusiveMin).describe('Positive amount with no more than 8 decimal places.'),
-  "currency": zod.enum(['YER', 'SAR', 'USD', 'USDT'])
+  "currency": zod.enum(['YER', 'SAR', 'USD', 'USDT']),
+  "pin": zod.string().regex(transferFundsBodyPinRegExp).optional().describe('Six-digit transfer PIN used when a JWT is not supplied.')
 })
 
 export const transferFundsResponseSenderWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');

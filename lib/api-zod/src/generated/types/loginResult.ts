@@ -5,15 +5,10 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { Balances } from './balances';
 
-export interface WalletRegistrationResponse {
+export interface LoginResult {
+  accessToken: string;
   userId: string;
   /** @pattern ^HW-[0-9]{6}$ */
   walletId: string;
-  name?: string;
-  email?: string;
-  balances: Balances;
-  createdAt: Date;
-  accessToken: string;
 }

@@ -7,13 +7,14 @@ import {
   TransferFundsResponse,
   type TransferResult,
 } from "@workspace/api-zod";
+import { getRequestIdentity, verifyCredential } from "../lib/auth";
 
 const router: IRouter = Router();
 const DECIMAL_SCALE = 100_000_000;
 
 type TransferFailure = {
   ok: false;
-  status: 400 | 404 | 409;
+  status: 400 | 401 | 403 | 404 | 409;
   error: string;
 };
 
@@ -109,6 +110,7 @@ router.post("/transfer", async (req, res) => {
     receiverWalletId,
     amount,
     currency,
+    pin,
   } = parsedRequest.data;
 
   if (!isValidAmount(amount)) {
@@ -122,6 +124,13 @@ router.post("/transfer", async (req, res) => {
     res
       .status(400)
       .json({ error: "Sender and receiver wallets must be different" });
+    return;
+  }
+
+  const identity = getRequestIdentity(req);
+
+  if (!identity && !pin) {
+    res.status(401).json({ error: "Authentication or transfer PIN is required" });
     return;
   }
 
@@ -147,6 +156,30 @@ router.post("/transfer", async (req, res) => {
           ok: false,
           status: 404,
           error: "Sender or receiver wallet was not found",
+        };
+      }
+
+      if (identity) {
+        const ownsSenderWallet =
+          identity.kind === "jwt"
+            ? identity.userId === sender.userId
+            : identity.clerkUserId === sender.clerkUserId;
+
+        if (!ownsSenderWallet) {
+          return {
+            ok: false,
+            status: 403,
+            error: "The authenticated account does not own the sender wallet",
+          };
+        }
+      } else if (
+        !pin ||
+        !(await verifyCredential(pin, sender.pinHash, sender.pinSalt))
+      ) {
+        return {
+          ok: false,
+          status: 401,
+          error: "Invalid transfer PIN",
         };
       }
 

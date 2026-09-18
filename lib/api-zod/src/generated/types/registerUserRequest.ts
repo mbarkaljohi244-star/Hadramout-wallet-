@@ -14,4 +14,14 @@ export interface RegisterUserRequest {
   name?: string;
   /** @maxLength 254 */
   email?: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+  /**
+     * Six-digit transfer PIN. Leading zeroes are allowed.
+     * @pattern ^[0-9]{6}$
+     */
+  pin: string;
 }
