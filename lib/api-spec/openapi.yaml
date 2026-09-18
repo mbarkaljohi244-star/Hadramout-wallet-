@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User registration operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /users/register:
+    post:
+      operationId: registerUser
+      tags: [users]
+      summary: Register a new wallet user
+      description: Creates a user with a unique Hadramout Wallet ID and zero balances.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUserRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletRegistrationResponse"
+        "400":
+          description: Invalid registration details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Wallet ID generation temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,61 @@ components:
           type: string
       required:
         - status
+    RegisterUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+      additionalProperties: false
+    Balances:
+      type: object
+      properties:
+        YER:
+          type: number
+          const: 0
+        SAR:
+          type: number
+          const: 0
+        USD:
+          type: number
+          const: 0
+        USDT:
+          type: number
+          const: 0
+      required: [YER, SAR, USD, USDT]
+      additionalProperties: false
+    WalletRegistrationResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        walletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        balances:
+          $ref: "#/components/schemas/Balances"
+        createdAt:
+          type: string
+          format: date-time
+      required: [userId, walletId, balances, createdAt]
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+      additionalProperties: false
 

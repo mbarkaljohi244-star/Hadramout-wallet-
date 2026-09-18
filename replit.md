@@ -1,6 +1,6 @@
-# [Project name]
+# Hadramout Wallet
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An Express API for registering Hadramout Wallet users with unique wallet IDs and initial multi-currency balances.
 
 ## Run & Operate
 
@@ -22,23 +22,30 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/api-server/src/routes/users.ts` — wallet user registration endpoint and wallet ID generation.
+- `artifacts/api-server/src/routes/health.ts` — health check endpoint.
+- `lib/api-spec/openapi.yaml` — source of truth for the API contract.
+- `lib/api-zod/src/generated/` and `lib/api-client-react/src/generated/` — generated API schemas and client helpers.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Wallet IDs use Node's cryptographic random number generator and an in-process set to avoid collisions during the server lifetime.
+- Registration starts YER, SAR, USD, and USDT at numeric zero.
+- Registration data is held in process memory because this project does not currently have a configured database connection.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Register a wallet user through `POST /api/users/register`.
+- Return a generated wallet ID in `HW-XXXXXX` format and initial balances for all supported currencies.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+No additional preferences recorded.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- In-memory registrations and issued IDs reset when the API process restarts.
+- Run API contract codegen after changing `lib/api-spec/openapi.yaml`.
 
 ## Pointers
 
