@@ -50,3 +50,36 @@ export const RegisterUserResponse = zod.object({
 })
 
 
+/**
+ * Atomically transfers funds from one wallet to another in the requested currency.
+ * @summary Transfer funds between wallets
+ */
+export const transferFundsBodySenderWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
+export const transferFundsBodyReceiverWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
+export const transferFundsBodyAmountExclusiveMin = 0;
+
+
+
+export const TransferFundsBody = zod.object({
+  "senderWalletId": zod.string().regex(transferFundsBodySenderWalletIdRegExp),
+  "receiverWalletId": zod.string().regex(transferFundsBodyReceiverWalletIdRegExp),
+  "amount": zod.number().gt(transferFundsBodyAmountExclusiveMin).describe('Positive amount with no more than 8 decimal places.'),
+  "currency": zod.enum(['YER', 'SAR', 'USD', 'USDT'])
+})
+
+export const transferFundsResponseSenderWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
+export const transferFundsResponseReceiverWalletIdRegExp = new RegExp('^HW-[0-9]{6}$');
+
+
+export const TransferFundsResponse = zod.object({
+  "transferId": zod.string().uuid(),
+  "senderWalletId": zod.string().regex(transferFundsResponseSenderWalletIdRegExp),
+  "receiverWalletId": zod.string().regex(transferFundsResponseReceiverWalletIdRegExp),
+  "amount": zod.number(),
+  "currency": zod.enum(['YER', 'SAR', 'USD', 'USDT']),
+  "senderBalance": zod.number(),
+  "receiverBalance": zod.number(),
+  "transferredAt": zod.coerce.date()
+})
+
+

@@ -23,6 +23,8 @@ import type {
   ErrorResponse,
   HealthStatus,
   RegisterUserRequest,
+  TransferRequest,
+  TransferResult,
   WalletRegistrationResponse
 } from './api.schemas';
 
@@ -218,5 +220,94 @@ export const useRegisterUser = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getRegisterUserMutationOptions(options));
+    }
+
+export const getTransferFundsUrl = () => {
+
+
+
+
+  return `/api/transfer`
+}
+
+/**
+ * Atomically transfers funds from one wallet to another in the requested currency.
+ * @summary Transfer funds between wallets
+ */
+export const transferFunds = async (transferRequest: TransferRequest, options?: Parameters<typeof customFetch>[1]): Promise<TransferResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<TransferResult>(getTransferFundsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(transferRequest)
+  }
+);}
+
+
+
+
+
+export const getTransferFundsMutationKey = () => ['transferFunds'] as const;
+
+export const getTransferFundsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferFunds>>, TError,TransferFundsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof transferFunds>>, TError,TransferFundsMutationVariables, TContext> => {
+
+const mutationKey = getTransferFundsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof transferFunds>>, TransferFundsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  transferFunds(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TransferFundsMutationResult = NonNullable<Awaited<ReturnType<typeof transferFunds>>>
+    export type TransferFundsMutationBody = BodyType<TransferRequest>
+    export type TransferFundsMutationError = ErrorType<ErrorResponse>
+    export type TransferFundsMutationVariables = {data: BodyType<TransferRequest>}
+
+    /**
+ * @summary Transfer funds between wallets
+ */
+export const useTransferFunds = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferFunds>>, TError,TransferFundsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof transferFunds>>,
+        TError,
+        TransferFundsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTransferFundsMutationOptions(options));
     }
 

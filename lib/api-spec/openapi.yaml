@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: users
     description: User registration operations
+  - name: transfers
+    description: Wallet transfer operations
 paths:
   /healthz:
     get:
@@ -53,6 +55,49 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "503":
           description: Wallet ID generation temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /transfer:
+    post:
+      operationId: transferFunds
+      tags: [transfers]
+      summary: Transfer funds between wallets
+      description: Atomically transfers funds from one wallet to another in the requested currency.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+      responses:
+        "200":
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferResult"
+        "400":
+          description: Invalid transfer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Sender or receiver wallet was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Transfer cannot be completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Database temporarily unavailable
           content:
             application/json:
               schema:
@@ -122,5 +167,58 @@ components:
         error:
           type: string
       required: [error]
+      additionalProperties: false
+    TransferCurrency:
+      type: string
+      enum: [YER, SAR, USD, USDT]
+    TransferRequest:
+      type: object
+      properties:
+        senderWalletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+        receiverWalletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+        amount:
+          type: number
+          exclusiveMinimum: 0
+          description: Positive amount with no more than 8 decimal places.
+        currency:
+          $ref: "#/components/schemas/TransferCurrency"
+      required: [senderWalletId, receiverWalletId, amount, currency]
+      additionalProperties: false
+    TransferResult:
+      type: object
+      properties:
+        transferId:
+          type: string
+          format: uuid
+        senderWalletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+        receiverWalletId:
+          type: string
+          pattern: "^HW-[0-9]{6}$"
+        amount:
+          type: number
+        currency:
+          $ref: "#/components/schemas/TransferCurrency"
+        senderBalance:
+          type: number
+        receiverBalance:
+          type: number
+        transferredAt:
+          type: string
+          format: date-time
+      required:
+        - transferId
+        - senderWalletId
+        - receiverWalletId
+        - amount
+        - currency
+        - senderBalance
+        - receiverBalance
+        - transferredAt
       additionalProperties: false
 

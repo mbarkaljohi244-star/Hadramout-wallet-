@@ -41,3 +41,39 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type TransferCurrency = typeof TransferCurrency[keyof typeof TransferCurrency];
+
+
+export const TransferCurrency = {
+  YER: 'YER',
+  SAR: 'SAR',
+  USD: 'USD',
+  USDT: 'USDT',
+} as const;
+
+export interface TransferRequest {
+  /** @pattern ^HW-[0-9]{6}$ */
+  senderWalletId: string;
+  /** @pattern ^HW-[0-9]{6}$ */
+  receiverWalletId: string;
+  /**
+     * Positive amount with no more than 8 decimal places.
+     * @exclusiveMinimum 0
+     */
+  amount: number;
+  currency: TransferCurrency;
+}
+
+export interface TransferResult {
+  transferId: string;
+  /** @pattern ^HW-[0-9]{6}$ */
+  senderWalletId: string;
+  /** @pattern ^HW-[0-9]{6}$ */
+  receiverWalletId: string;
+  amount: number;
+  currency: TransferCurrency;
+  senderBalance: number;
+  receiverBalance: number;
+  transferredAt: string;
+}
+

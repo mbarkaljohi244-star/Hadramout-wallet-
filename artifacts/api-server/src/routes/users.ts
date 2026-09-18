@@ -1,5 +1,11 @@
-import { randomInt, randomUUID } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { Router, type IRouter } from "express";
+import {
+  db,
+  usersTable,
+  type NewUser,
+  type User,
+} from "@workspace/db";
 import {
   RegisterUserBody,
   RegisterUserResponse,
@@ -7,23 +13,64 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-const issuedWalletIds = new Set<string>();
 const MAX_WALLET_ID_ATTEMPTS = 10;
 
-const createWalletId = (): string => {
-  for (let attempt = 0; attempt < MAX_WALLET_ID_ATTEMPTS; attempt += 1) {
-    const walletId = `HW-${randomInt(0, 1_000_000).toString().padStart(6, "0")}`;
+const createWalletId = (): string =>
+  `HW-${randomInt(0, 1_000_000).toString().padStart(6, "0")}`;
 
-    if (!issuedWalletIds.has(walletId)) {
-      issuedWalletIds.add(walletId);
-      return walletId;
+const isUniqueViolation = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  error.code === "23505";
+
+const createUser = async (
+  name: string | undefined,
+  email: string | undefined,
+): Promise<User> => {
+  for (let attempt = 0; attempt < MAX_WALLET_ID_ATTEMPTS; attempt += 1) {
+    const values: NewUser = {
+      walletId: createWalletId(),
+      ...(name ? { name } : {}),
+      ...(email ? { email } : {}),
+    };
+
+    try {
+      const [user] = await db.insert(usersTable).values(values).returning();
+
+      if (!user) {
+        throw new Error("User insert did not return a row");
+      }
+
+      return user;
+    } catch (error) {
+      if (!isUniqueViolation(error)) {
+        throw error;
+      }
     }
   }
 
   throw new Error("Unable to allocate a unique wallet ID");
 };
 
-router.post("/users/register", (req, res) => {
+const toRegistrationResponse = (
+  user: User,
+): WalletRegistrationResponse =>
+  RegisterUserResponse.parse({
+    userId: user.userId,
+    walletId: user.walletId,
+    ...(user.name ? { name: user.name } : {}),
+    ...(user.email ? { email: user.email } : {}),
+    balances: {
+      YER: 0,
+      SAR: 0,
+      USD: 0,
+      USDT: 0,
+    },
+    createdAt: user.createdAt,
+  });
+
+router.post("/users/register", async (req, res) => {
   const parsedRequest = RegisterUserBody.strict().safeParse(req.body ?? {});
 
   if (!parsedRequest.success) {
@@ -31,34 +78,19 @@ router.post("/users/register", (req, res) => {
     return;
   }
 
-  let walletId: string;
-
   try {
-    walletId = createWalletId();
+    const user = await createUser(
+      parsedRequest.data.name,
+      parsedRequest.data.email,
+    );
+    const response = toRegistrationResponse(user);
+
+    req.log.info({ walletId: user.walletId }, "User registered");
+    res.status(201).json(response);
   } catch (error) {
-    req.log.error({ err: error }, "Unable to allocate a wallet ID");
+    req.log.error({ err: error }, "Unable to register user");
     res.status(503).json({ error: "Unable to create a wallet right now" });
-    return;
   }
-
-  const { name, email } = parsedRequest.data;
-  const response: WalletRegistrationResponse = {
-    userId: randomUUID(),
-    walletId,
-    ...(name ? { name } : {}),
-    ...(email ? { email } : {}),
-    balances: {
-      YER: 0,
-      SAR: 0,
-      USD: 0,
-      USDT: 0,
-    },
-    createdAt: new Date(),
-  };
-
-  const validatedResponse = RegisterUserResponse.parse(response);
-  req.log.info({ walletId }, "User registered");
-  res.status(201).json(validatedResponse);
 });
 
 export default router;

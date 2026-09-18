@@ -23,20 +23,23 @@ An Express API for registering Hadramout Wallet users with unique wallet IDs and
 ## Where things live
 
 - `artifacts/api-server/src/routes/users.ts` — wallet user registration endpoint and wallet ID generation.
+- `artifacts/api-server/src/routes/transfers.ts` — transaction-safe wallet-to-wallet transfers.
 - `artifacts/api-server/src/routes/health.ts` — health check endpoint.
 - `lib/api-spec/openapi.yaml` — source of truth for the API contract.
 - `lib/api-zod/src/generated/` and `lib/api-client-react/src/generated/` — generated API schemas and client helpers.
+- `lib/db/src/schema/users.ts` — PostgreSQL wallet user and balance schema.
 
 ## Architecture decisions
 
-- Wallet IDs use Node's cryptographic random number generator and an in-process set to avoid collisions during the server lifetime.
+- Wallet IDs use Node's cryptographic random number generator and a PostgreSQL unique constraint to avoid collisions permanently.
 - Registration starts YER, SAR, USD, and USDT at numeric zero.
-- Registration data is held in process memory because this project does not currently have a configured database connection.
+- Transfers lock both wallet rows in sorted wallet-ID order to prevent races and deadlocks, then commit both balance changes in one database transaction.
 
 ## Product
 
 - Register a wallet user through `POST /api/users/register`.
 - Return a generated wallet ID in `HW-XXXXXX` format and initial balances for all supported currencies.
+- Transfer funds through `POST /api/transfer` with validation for supported currencies, positive amounts, wallet existence, and sufficient funds.
 
 ## User preferences
 
@@ -44,7 +47,7 @@ No additional preferences recorded.
 
 ## Gotchas
 
-- In-memory registrations and issued IDs reset when the API process restarts.
+- The development database schema is applied with `pnpm --filter @workspace/db run push`.
 - Run API contract codegen after changing `lib/api-spec/openapi.yaml`.
 
 ## Pointers

@@ -10,4 +10,7 @@ export * from './balances';
 export * from './errorResponse';
 export * from './healthStatus';
 export * from './registerUserRequest';
+export * from './transferCurrency';
+export * from './transferRequest';
+export * from './transferResult';
 export * from './walletRegistrationResponse';
