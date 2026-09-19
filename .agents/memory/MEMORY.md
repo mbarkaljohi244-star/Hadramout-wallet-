@@ -1,1 +1,2 @@
 - [Wallet auth model](wallet-auth.md) — local password/PIN credentials remain authoritative for API transfers while managed Clerk identities can be linked when present.
+- [KYC client boundary](kyc-client-boundary.md) — keep the mobile KYC draft local until protected upload and review endpoints exist in the API.

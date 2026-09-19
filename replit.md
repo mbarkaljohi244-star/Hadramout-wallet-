@@ -9,6 +9,9 @@ An Express API for registering Hadramout Wallet users with unique wallet IDs, se
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `cd mobile/hadramout_wallet && flutter pub get` — install Flutter dependencies
+- `cd mobile/hadramout_wallet && flutter analyze` — analyze the Flutter client
+- `cd mobile/hadramout_wallet && flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api` — run the Android emulator client
 - Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
@@ -19,6 +22,7 @@ An Express API for registering Hadramout Wallet users with unique wallet IDs, se
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Mobile: Flutter with Arabic RTL Material localization
 
 ## Where things live
 
@@ -29,6 +33,7 @@ An Express API for registering Hadramout Wallet users with unique wallet IDs, se
 - `lib/api-spec/openapi.yaml` — source of truth for the API contract.
 - `lib/api-zod/src/generated/` and `lib/api-client-react/src/generated/` — generated API schemas and client helpers.
 - `lib/db/src/schema/users.ts` — PostgreSQL wallet user and balance schema.
+- `mobile/hadramout_wallet/` — Flutter mobile client with Arabic auth, transfer, and KYC flows.
 
 ## Architecture decisions
 
@@ -53,6 +58,7 @@ No additional preferences recorded.
 - The development database schema is applied with `pnpm --filter @workspace/db run push`.
 - Run API contract codegen after changing `lib/api-spec/openapi.yaml`.
 - Clerk is available for managed sessions; local wallet JWTs are supported for this API-only flow.
+- The Flutter client uses `API_BASE_URL` to reach the local Node API; Android emulators use `10.0.2.2` to reach the host machine.
 
 ## Pointers
 
