@@ -1,6 +1,6 @@
 # Hadramout Wallet
 
-An Express API for registering Hadramout Wallet users with unique wallet IDs and initial multi-currency balances.
+An Express API for registering Hadramout Wallet users with unique wallet IDs, secure credentials, and initial multi-currency balances.
 
 ## Run & Operate
 
@@ -23,6 +23,7 @@ An Express API for registering Hadramout Wallet users with unique wallet IDs and
 ## Where things live
 
 - `artifacts/api-server/src/routes/users.ts` — wallet user registration endpoint and wallet ID generation.
+- `artifacts/api-server/src/lib/auth.ts` — password/PIN hashing and signed wallet JWT handling.
 - `artifacts/api-server/src/routes/transfers.ts` — transaction-safe wallet-to-wallet transfers.
 - `artifacts/api-server/src/routes/health.ts` — health check endpoint.
 - `lib/api-spec/openapi.yaml` — source of truth for the API contract.
@@ -34,12 +35,14 @@ An Express API for registering Hadramout Wallet users with unique wallet IDs and
 - Wallet IDs use Node's cryptographic random number generator and a PostgreSQL unique constraint to avoid collisions permanently.
 - Registration starts YER, SAR, USD, and USDT at numeric zero.
 - Transfers lock both wallet rows in sorted wallet-ID order to prevent races and deadlocks, then commit both balance changes in one database transaction.
+- Passwords and PINs use salted scrypt hashes; wallet JWTs are signed with the existing session secret and expire after seven days.
 
 ## Product
 
 - Register a wallet user through `POST /api/users/register`.
+- Log in with a wallet password through `POST /api/auth/login`.
 - Return a generated wallet ID in `HW-XXXXXX` format and initial balances for all supported currencies.
-- Transfer funds through `POST /api/transfer` with validation for supported currencies, positive amounts, wallet existence, and sufficient funds.
+- Transfer funds through `POST /api/transfer` with a matching wallet JWT or valid six-digit PIN, plus validation for supported currencies, positive amounts, wallet existence, and sufficient funds.
 
 ## User preferences
 
@@ -49,6 +52,7 @@ No additional preferences recorded.
 
 - The development database schema is applied with `pnpm --filter @workspace/db run push`.
 - Run API contract codegen after changing `lib/api-spec/openapi.yaml`.
+- Clerk is available for managed sessions; local wallet JWTs are supported for this API-only flow.
 
 ## Pointers
 

@@ -1,0 +1,1 @@
+- [Wallet auth model](wallet-auth.md) — local password/PIN credentials remain authoritative for API transfers while managed Clerk identities can be linked when present.
