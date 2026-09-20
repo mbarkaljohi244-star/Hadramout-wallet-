@@ -23,16 +23,16 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Find Flutter directory and Build APK
-      run: |
-        FLUTTER_DIR=$(dirname $(find . -maxdepth 3 -name "pubspec.yaml" | head -n 1))
-        echo "Found Flutter project at: $FLUTTER_DIR"
-        cd $FLUTTER_DIR
-        flutter pub get
-        flutter build apk --release
+    - name: Install dependencies
+      working-directory: mobile/hadramout_wallet
+      run: flutter pub get
+
+    - name: Build APK
+      working-directory: mobile/hadramout_wallet
+      run: flutter build apk --release
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-release-apk
-        path: "**/build/app/outputs/flutter-apk/app-release.apk"
+        path: mobile/hadramout_wallet/build/app/outputs/flutter-apk/app-release.apk
